@@ -9,14 +9,14 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class Server {
+public class XnorServer {
 
     private final ServerSocket serverSocket;
     private ExecutorService executor;
     @Getter
     private final List<ChatWorker> threads;
 
-    public Server(ServerSocket ss) throws IOException {
+    public XnorServer(ServerSocket ss) throws IOException {
         serverSocket = ss;
         executor = Executors.newCachedThreadPool();
         threads = new ArrayList<>();

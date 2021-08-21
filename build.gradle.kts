@@ -9,7 +9,7 @@ plugins {
 }
 
 group  = "com.github.jacekpoz"
-version  = "0.4.1"
+version  = "0.4.2"
 
 repositories {
     mavenLocal()
@@ -26,7 +26,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-databind:2.12.4")
     implementation("mysql:mysql-connector-java:8.0.26")
 
-    implementation("com.github.jacekpoz:xnor-lib:0.4.2")
+    implementation("com.github.jacekpoz:xnor-lib:0.5.0")
 }
 
 tasks {
@@ -36,8 +36,10 @@ tasks {
     val shadowJar by getting(ShadowJar::class) {
         archiveClassifier.set("")
         archiveFileName.set("${project.name}-${project.version}.jar")
+        manifest.attributes["Main-Class"] = "com.github.jacekpoz.server.XnorServerMain"
     }
 }
+
 
 publishing {
     publications {

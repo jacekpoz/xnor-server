@@ -28,7 +28,7 @@ public class ChatWorker extends Thread {
     @Getter
     private final Socket clientSocket;
     @Getter
-    private final Server server;
+    private final XnorServer server;
     @ToString.Include
     @EqualsAndHashCode.Include
     @Getter
@@ -45,8 +45,7 @@ public class ChatWorker extends Thread {
     @Getter
     private final JsonObjectMapper mapper;
 
-
-    public ChatWorker(Socket so, Server se) throws IOException {
+    public ChatWorker(Socket so, XnorServer se) throws IOException {
         super("ChatThread");
         clientSocket = so;
         server = se;
@@ -75,7 +74,7 @@ public class ChatWorker extends Thread {
 
                     if (input instanceof Query) {
                         output = qh.handleQuery((Query<?>) input);
-                        if (output instanceof LoginResult lr && output.success())
+                        if (output instanceof LoginResult lr && output.getSuccess())
                             setCurrentUser(lr.get().get(0));
 //                        System.out.println("result: " + output + "\n");
                         String json = mapper.writeValueAsString(output);

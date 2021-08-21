@@ -3,7 +3,7 @@ package com.github.jacekpoz.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 
-public class ChatServerMain {
+public class XnorServerMain {
 
     public static void main(String[] args) {
 
@@ -15,7 +15,7 @@ public class ChatServerMain {
         int port = Integer.parseInt(args[0]);
 
         try {
-            Server s = new Server(new ServerSocket(port));
+            XnorServer s = new XnorServer(new ServerSocket(port));
             s.start();
         } catch (IOException e) {
             System.err.println("Couldn't listen on port " + port);

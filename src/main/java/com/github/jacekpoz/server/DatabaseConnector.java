@@ -29,6 +29,7 @@ public class DatabaseConnector {
         RegisterResult returned = new RegisterResult(rq);
         returned.setSuccess(false);
         try (PreparedStatement checkUsername = con.prepareStatement(
+
                 "SELECT username " +
                     "FROM " + Constants.USERS_TABLE +
                     " WHERE username = ?;"
@@ -505,7 +506,7 @@ public class DatabaseConnector {
                     .forEach(message -> c.getMessages().add(message));
 
             getUsersInChat(chatID)
-                    .forEach(user -> c.getMemberIDs().add(user.getId()));
+                    .forEach(user -> c.getMemberIDs().add(user.getUserID()));
 
             return c;
         } catch (SQLException e) {

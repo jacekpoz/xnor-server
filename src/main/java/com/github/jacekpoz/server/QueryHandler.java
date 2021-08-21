@@ -56,7 +56,7 @@ public class QueryHandler {
                     imq.getContent()
             );
             mr.setSuccess(m != null);
-            if (mr.success()) mr.add(m);
+            if (mr.getSuccess()) mr.add(m);
         } else {
             throw new UnknownQueryException(mq);
         }
@@ -73,12 +73,12 @@ public class QueryHandler {
             } else {
                 Chat c = connector.getChat(gcq.getChatID());
                 cr.setSuccess(c != null);
-                if (cr.success()) cr.add(c);
+                if (cr.getSuccess()) cr.add(c);
             }
         } else if (cq instanceof InsertChatQuery icq) {
             Chat c = connector.createChat(icq.getChatName(), icq.getMemberIDs());
             cr.setSuccess(c != null);
-            if (cr.success()) cr.add(c);
+            if (cr.getSuccess()) cr.add(c);
             System.out.println("icq: " + icq);
             System.out.println("cr: " + cr);
         } else {
