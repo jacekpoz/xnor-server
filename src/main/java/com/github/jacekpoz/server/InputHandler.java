@@ -33,7 +33,8 @@ public class InputHandler {
     private void handleMessage(Message m) {
         try {
             for (ChatWorker ct : worker.getServer().getThreads())
-                if (worker.getCurrentChat().getMemberIDs().contains(ct.getCurrentUser().getUserID()))
+                if (worker.getCurrentChat().getMemberIDs().contains(ct.getCurrentUser().getUserID()) &&
+                        !worker.getCurrentUser().equals(ct.getCurrentUser()))
                     ct.send(worker.getMapper().writeValueAsString(m));
         } catch (JsonProcessingException e) {
             e.printStackTrace();
