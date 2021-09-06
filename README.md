@@ -1,7 +1,7 @@
 # xnor-server
 [![GitHub license](https://img.shields.io/github/license/jacekpoz/xnor-lib)](https://github.com/jacekpoz/xnor-lib/blob/master/LICENSE)
-[![Data definitely not sold](https://img.shields.io/badge/data-definitely%20not%20sold-red)](https://img.shields.io/badge/data-definitely%20not%20sold-red)
-[![Don't look at DataStealer.java](https://img.shields.io/badge/don't%20look%20at-DataStealer.java-red)](https://img.shields.io/badge/don't%20look%20at-DataStealer.java-red)
+[![Data definitely not sold](https://img.shields.io/badge/data-definitely%20not%20sold-red)](https://imgur.com/a/RRHsGTW)
+[![Don't look at DataStealer.java](https://img.shields.io/badge/don't%20look%20at-DataStealer.java-red)](https://imgur.com/a/RRHsGTW)
 
 server for the xnor chat app I'm making
 not that big but got some big plans
