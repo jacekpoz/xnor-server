@@ -8,7 +8,7 @@ public class XnorServerMain {
     public static void main(String[] args) {
 
         if (args.length != 1) {
-            System.err.println("You only need to input the port");
+            System.err.println("Correct usage: java -jar xnor-server-x.x.x.jar <port>");
             System.exit(1);
         }
 

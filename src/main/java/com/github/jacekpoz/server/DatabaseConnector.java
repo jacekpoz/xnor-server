@@ -2,6 +2,7 @@ package com.github.jacekpoz.server;
 
 import com.github.jacekpoz.common.Constants;
 import com.github.jacekpoz.common.EnumResults;
+import com.github.jacekpoz.common.sendables.Attachment;
 import com.github.jacekpoz.common.sendables.Chat;
 import com.github.jacekpoz.common.sendables.Message;
 import com.github.jacekpoz.common.sendables.User;
@@ -9,8 +10,11 @@ import com.github.jacekpoz.common.sendables.database.queries.user.LoginQuery;
 import com.github.jacekpoz.common.sendables.database.queries.user.RegisterQuery;
 import com.github.jacekpoz.common.sendables.database.results.LoginResult;
 import com.github.jacekpoz.common.sendables.database.results.RegisterResult;
+import com.github.jacekpoz.server.util.FileUtil;
 import com.kosprov.jargon2.api.Jargon2;
+import org.apache.commons.io.FilenameUtils;
 
+import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -407,6 +411,24 @@ public class DatabaseConnector {
         }
     }
 
+    public void insertAttachment(long attachmentID, long chatID, long messageID, String path, Long attachmentPosition) {
+        try (PreparedStatement insertAttachment = con.prepareStatement(
+                "INSERT INTO " + Constants.ATTACHMENTS_TABLE +
+                    " VALUES (?, ?, ?, ?, ?);"
+        )) {
+            insertAttachment.setLong(1, attachmentID);
+            insertAttachment.setLong(2, chatID);
+            insertAttachment.setLong(3, messageID);
+            insertAttachment.setString(4, path);
+            if (attachmentPosition == null) insertAttachment.setNull(5, Types.BIGINT);
+            else insertAttachment.setLong(5, attachmentPosition);
+
+            insertAttachment.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     public User getUser(long id) {
         return getUser0(String.valueOf(id), "user_id");
     }
@@ -532,7 +554,10 @@ public class DatabaseConnector {
             Timestamp sendDate = rs.getTimestamp("date_sent");
             rs.close();
 
-            return new Message(messageID, chatID, authorID, content, sendDate.toLocalDateTime());
+            Message m = new Message(messageID, chatID, authorID, content, sendDate.toLocalDateTime());
+            m.getAttachments().addAll(getAttachments(chatID, messageID));
+
+            return m;
         } catch (SQLException e) {
             e.printStackTrace();
             return new Message("getMessage() failed");
@@ -708,6 +733,44 @@ public class DatabaseConnector {
 
             return friendRequests;
         } catch (SQLException e) {
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+    }
+
+    public List<Attachment> getAttachments(long chatID, long messageID) {
+        try (PreparedStatement getAttachment = con.prepareStatement(
+                "SELECT * " +
+                    "FROM " + Constants.ATTACHMENTS_TABLE +
+                    "WHERE chat_id = ? AND " +
+                    "message_id = ?;"
+        )) {
+            getAttachment.setLong(1, chatID);
+            getAttachment.setLong(2, messageID);
+
+            List<Attachment> attachments = new ArrayList<>();
+
+            ResultSet rs = getAttachment.executeQuery();
+
+            while (rs.next()) {
+                long attachmentID = rs.getLong("attachment_id");
+                String path = rs.getString("path");
+                long attachmentPosition = rs.getLong("attachment_position");
+
+                Attachment a = new Attachment(
+                        attachmentID,
+                        attachmentPosition,
+                        FilenameUtils.getName(path),
+                        FilenameUtils.getExtension(path)
+                );
+
+                a.getFileContents().addAll(FileUtil.getFileContents(path));
+
+                attachments.add(a);
+            }
+
+            return attachments;
+        } catch (SQLException | IOException e) {
             e.printStackTrace();
             return new ArrayList<>();
         }

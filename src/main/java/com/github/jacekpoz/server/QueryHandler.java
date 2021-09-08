@@ -18,7 +18,10 @@ import com.github.jacekpoz.common.sendables.database.results.ChatResult;
 import com.github.jacekpoz.common.sendables.database.results.MessageResult;
 import com.github.jacekpoz.common.sendables.database.results.Result;
 import com.github.jacekpoz.common.sendables.database.results.UserResult;
+import com.github.jacekpoz.server.util.FileUtil;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -29,7 +32,7 @@ public class QueryHandler {
     public QueryHandler() {
         try {
             connector = new DatabaseConnector("jdbc:mysql://localhost:3306/" + Constants.DB_NAME,
-                    "xnor-chat-client", System.getenv("DB_PASSWORD"));
+                    "xnor-chat-client", "DB_Password_0123456789");
         } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
         }
@@ -55,6 +58,23 @@ public class QueryHandler {
                     imq.getAuthorID(),
                     imq.getContent()
             );
+            m.getAttachments().forEach(a -> {
+                String attachmentPath = FileUtil.getAttachmentPath(m.getChatID(), m.getMessageID(), a);
+
+                try {
+                    FileUtil.writeFile(attachmentPath, a.getFileContents());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                connector.insertAttachment(
+                        a.getAttachmentID(),
+                        m.getMessageID(),
+                        m.getChatID(),
+                        attachmentPath,
+                        a.getAttachmentPosition()
+                );
+            });
             mr.setSuccess(m != null);
             if (mr.getSuccess()) mr.add(m);
         } else {

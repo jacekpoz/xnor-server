@@ -28,6 +28,7 @@ public class XnorServer {
             try {
                 while (true) {
                     ChatWorker thread = new ChatWorker(serverSocket.accept(), this);
+                    System.out.println();
                     threads.add(thread);
                     executor.submit(thread);
                 }

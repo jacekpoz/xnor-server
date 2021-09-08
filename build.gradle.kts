@@ -9,7 +9,7 @@ plugins {
 }
 
 group  = "com.github.jacekpoz"
-version  = "0.4.2"
+version  = "0.4.3"
 
 repositories {
     mavenLocal()
@@ -25,6 +25,7 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-core:2.12.5")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.12.5")
     implementation("mysql:mysql-connector-java:8.0.26")
+    implementation("commons-io:commons-io:2.11.0")
 
     implementation("com.github.jacekpoz:xnor-lib:0.5.0")
 }
@@ -39,7 +40,6 @@ tasks {
         manifest.attributes["Main-Class"] = "com.github.jacekpoz.server.XnorServerMain"
     }
 }
-
 
 publishing {
     publications {
