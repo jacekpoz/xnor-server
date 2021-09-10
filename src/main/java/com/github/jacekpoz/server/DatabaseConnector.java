@@ -747,7 +747,7 @@ public class DatabaseConnector {
 
             while (rs.next()) {
                 long senderID = rs.getLong("sender_id");
-                friendRequests.add(new FriendRequest(senderID, recipientID));
+                friendRequests.add(new FriendRequest(getUser(senderID), getUser(recipientID)));
             }
             rs.close();
 
