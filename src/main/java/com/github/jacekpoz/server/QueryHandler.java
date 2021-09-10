@@ -139,7 +139,11 @@ public class QueryHandler {
                 ur.setSuccess(true);
             }
             case GET_MESSAGE_AUTHOR -> {
-                ur.add(connector.getUser(uq.getValue("userID", long.class)));
+                Message m = connector.getMessage(
+                        uq.getValue("messageID", long.class),
+                        uq.getValue("chatID", long.class)
+                );
+                ur.add(connector.getUser(m.getAuthorID()));
                 ur.setSuccess(true);
             }
             case GET_USERS_IN_CHAT -> {
