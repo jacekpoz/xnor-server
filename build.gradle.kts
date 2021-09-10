@@ -27,7 +27,7 @@ dependencies {
     implementation("mysql:mysql-connector-java:8.0.26")
     implementation("commons-io:commons-io:2.11.0")
 
-    implementation("com.github.jacekpoz:xnor-lib:0.5.0")
+    implementation("com.github.jacekpoz:xnor-lib:0.5.2")
 }
 
 tasks {

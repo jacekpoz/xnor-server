@@ -4,7 +4,7 @@ import com.github.jacekpoz.common.jackson.JsonObjectMapper;
 import com.github.jacekpoz.common.sendables.Chat;
 import com.github.jacekpoz.common.sendables.Sendable;
 import com.github.jacekpoz.common.sendables.User;
-import com.github.jacekpoz.common.sendables.database.queries.basequeries.Query;
+import com.github.jacekpoz.common.sendables.database.queries.Query;
 import com.github.jacekpoz.common.sendables.database.results.LoginResult;
 import com.github.jacekpoz.common.sendables.database.results.Result;
 import lombok.EqualsAndHashCode;
@@ -74,6 +74,7 @@ public class ChatWorker extends Thread {
 
                     if (input instanceof Query) {
                         output = qh.handleQuery((Query<?>) input);
+                        if (output == null) continue;
                         if (output instanceof LoginResult lr && output.getSuccess())
                             setCurrentUser(lr.get().get(0));
 //                        System.out.println("result: " + output + "\n");
@@ -93,8 +94,6 @@ public class ChatWorker extends Thread {
                     ioe.printStackTrace();
                 }
 
-            } catch (IOException e) {
-                e.printStackTrace();
             } catch (Throwable e) {
                 e.printStackTrace();
             }

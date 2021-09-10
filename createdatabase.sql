@@ -84,6 +84,7 @@ DROP TABLE IF EXISTS `friends`;
 CREATE TABLE `friends` (
   `user_id` bigint NOT NULL,
   `friend_id` bigint NOT NULL,
+  `friends_since` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`user_id`,`friend_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -151,3 +152,9 @@ CREATE TABLE `users_in_chats` (
 
 CREATE USER IF NOT EXISTS 'xnor-chat-client'@'%' IDENTIFIED BY 'DB_Password_0123456789';
 GRANT ALL PRIVILEGES ON `xnordatabase`.* TO 'xnor-chat-client'@'%';
+
+INSERT INTO chats (chat_id, name)
+SELECT * FROM (SELECT 0 AS chat_id, "global" AS name)
+WHERE NOT EXISTS(
+    SELECT chat_id FROM chats WHERE chat_id = 0
+);

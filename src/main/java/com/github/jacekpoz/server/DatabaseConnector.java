@@ -2,12 +2,9 @@ package com.github.jacekpoz.server;
 
 import com.github.jacekpoz.common.Constants;
 import com.github.jacekpoz.common.EnumResults;
-import com.github.jacekpoz.common.sendables.Attachment;
-import com.github.jacekpoz.common.sendables.Chat;
-import com.github.jacekpoz.common.sendables.Message;
-import com.github.jacekpoz.common.sendables.User;
-import com.github.jacekpoz.common.sendables.database.queries.user.LoginQuery;
-import com.github.jacekpoz.common.sendables.database.queries.user.RegisterQuery;
+import com.github.jacekpoz.common.sendables.*;
+import com.github.jacekpoz.common.sendables.database.queries.UserQuery;
+import com.github.jacekpoz.common.sendables.database.queries.UserQueryEnum;
 import com.github.jacekpoz.common.sendables.database.results.LoginResult;
 import com.github.jacekpoz.common.sendables.database.results.RegisterResult;
 import com.github.jacekpoz.server.util.FileUtil;
@@ -29,7 +26,8 @@ public class DatabaseConnector {
         con = DriverManager.getConnection(url, dbUsername, dbPassword);
     }
 
-    public RegisterResult register(RegisterQuery rq) {
+    public RegisterResult register(UserQuery rq) {
+        if (rq.getQueryType() != UserQueryEnum.REGISTER) return null;
         RegisterResult returned = new RegisterResult(rq);
         returned.setSuccess(false);
         try (PreparedStatement checkUsername = con.prepareStatement(
@@ -38,7 +36,7 @@ public class DatabaseConnector {
                     "FROM " + Constants.USERS_TABLE +
                     " WHERE username = ?;"
         )) {
-            checkUsername.setString(1, rq.getUsername());
+            checkUsername.setString(1, rq.getValue("username", String.class));
             ResultSet rs = checkUsername.executeQuery();
             if (rs.next()) {
                 rs.close();
@@ -47,7 +45,12 @@ public class DatabaseConnector {
             }
             rs.close();
 
-            returned.add(createUser(rq.getUsername(), rq.getHash()));
+            User registered = createUser(
+                    rq.getValue("username", String.class),
+                    rq.getValue("hash", String.class)
+            );
+
+            returned.add(registered);
             returned.setSuccess(true);
             returned.setResult(EnumResults.Register.ACCOUNT_CREATED);
             return returned;
@@ -59,7 +62,8 @@ public class DatabaseConnector {
         }
     }
 
-    public LoginResult login(LoginQuery lq) {
+    public LoginResult login(UserQuery lq) {
+        if (lq.getQueryType() != UserQueryEnum.LOGIN) return null;
         LoginResult returned = new LoginResult(lq);
         returned.setSuccess(false);
         try (PreparedStatement checkUsername = con.prepareStatement(
@@ -67,7 +71,7 @@ public class DatabaseConnector {
                     "FROM " + Constants.USERS_TABLE +
                     " WHERE username = ?;"
         )) {
-            checkUsername.setString(1, lq.getUsername());
+            checkUsername.setString(1, lq.getValue("username", String.class));
             ResultSet rs = checkUsername.executeQuery();
             if (!rs.next()) {
                 rs.close();
@@ -79,10 +83,10 @@ public class DatabaseConnector {
             rs.close();
 
             Jargon2.Verifier v = Jargon2.jargon2Verifier();
-            if (v.hash(dbHash).password(lq.getPassword()).verifyEncoded()) {
+            if (v.hash(dbHash).password(lq.getValue("password", byte[].class)).verifyEncoded()) {
                 returned.setSuccess(true);
                 returned.setResult(EnumResults.Login.LOGGED_IN);
-                returned.add(getUser(lq.getUsername()));
+                returned.add(getUser(lq.getValue("username", String.class)));
                 return returned;
             }
 
@@ -115,8 +119,8 @@ public class DatabaseConnector {
             rs.close();
 
             insertFriend = con.prepareStatement(
-                    "INSERT INTO " + Constants.FRIENDS_TABLE +
-                        " VALUES (?, ?);"
+                    "INSERT INTO " + Constants.FRIENDS_TABLE + " (user_id, friend_id) " +
+                        "VALUES (?, ?);"
             );
             insertFriend.setLong(1, userID);
             insertFriend.setLong(2, friendID);
@@ -301,7 +305,7 @@ public class DatabaseConnector {
         }
     }
 
-    public Chat createChat(String name, List<Long> memberIDs) {
+    public Chat createChat(String name, long[] memberIDs) {
         PreparedStatement selectMissingInfo = null;
         PreparedStatement insertChatMessageCounter = null;
 
@@ -356,6 +360,20 @@ public class DatabaseConnector {
         }
     }
 
+    public void addUserToChat(long chatID, long userID) {
+        try (PreparedStatement addUserToChat = con.prepareStatement(
+                "INSERT INTO " + Constants.USERS_IN_CHATS_TABLE +
+                    "VALUES (?, ?);"
+        )) {
+            addUserToChat.setLong(1, chatID);
+            addUserToChat.setLong(2, userID);
+
+            addUserToChat.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     public User createUser(String username, String hash) {
         try (PreparedStatement insertUser = con.prepareStatement(
                 "INSERT INTO " + Constants.USERS_TABLE + "(username, password_hash)" +
@@ -365,7 +383,10 @@ public class DatabaseConnector {
             insertUser.setString(2, hash);
             insertUser.executeUpdate();
 
-            return getUser(username);
+            User returned = getUser(username);
+            addUserToChat(Constants.GLOBAL_CHAT_ID, returned.getUserID());
+
+            return returned;
         } catch (SQLException e) {
             e.printStackTrace();
             return null;
@@ -546,8 +567,7 @@ public class DatabaseConnector {
             getMessage.setLong(1, messageID);
             getMessage.setLong(2, chatID);
             ResultSet rs = getMessage.executeQuery();
-            if (!rs.next()) return new Message(String.format("Message{messageID=%s,chatID=%s} doesn't exist",
-                    messageID, chatID));
+            if (!rs.next()) return null;
 
             long authorID = rs.getLong("author_id");
             String content = rs.getString("content");
@@ -560,7 +580,7 @@ public class DatabaseConnector {
             return m;
         } catch (SQLException e) {
             e.printStackTrace();
-            return new Message("getMessage() failed");
+            return null;
         }
     }
 
@@ -714,20 +734,20 @@ public class DatabaseConnector {
                 .collect(Collectors.toList());
     }
 
-    public List<User> getFriendRequests(long userID) {
+    public List<FriendRequest> getFriendRequests(long recipientID) {
         try (PreparedStatement st = con.prepareStatement(
                 "SELECT sender_id " +
                     "FROM " + Constants.FRIEND_REQUESTS_TABLE +
                     " WHERE friend_id = ?;"
         )) {
-            st.setLong(1, userID);
-            List<User> friendRequests = new ArrayList<>();
+            st.setLong(1, recipientID);
+            List<FriendRequest> friendRequests = new ArrayList<>();
 
             ResultSet rs = st.executeQuery();
 
             while (rs.next()) {
-                long id = rs.getLong("sender_id");
-                friendRequests.add(getUser(id));
+                long senderID = rs.getLong("sender_id");
+                friendRequests.add(new FriendRequest(senderID, recipientID));
             }
             rs.close();
 
@@ -742,7 +762,7 @@ public class DatabaseConnector {
         try (PreparedStatement getAttachment = con.prepareStatement(
                 "SELECT * " +
                     "FROM " + Constants.ATTACHMENTS_TABLE +
-                    "WHERE chat_id = ? AND " +
+                    " WHERE chat_id = ? AND " +
                     "message_id = ?;"
         )) {
             getAttachment.setLong(1, chatID);
