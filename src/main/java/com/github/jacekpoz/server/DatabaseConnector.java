@@ -363,7 +363,7 @@ public class DatabaseConnector {
     public void addUserToChat(long chatID, long userID) {
         try (PreparedStatement addUserToChat = con.prepareStatement(
                 "INSERT INTO " + Constants.USERS_IN_CHATS_TABLE +
-                    "VALUES (?, ?);"
+                    " VALUES (?, ?);"
         )) {
             addUserToChat.setLong(1, chatID);
             addUserToChat.setLong(2, userID);
@@ -377,7 +377,7 @@ public class DatabaseConnector {
     public User createUser(String username, String hash) {
         try (PreparedStatement insertUser = con.prepareStatement(
                 "INSERT INTO " + Constants.USERS_TABLE + "(username, password_hash)" +
-                " VALUES (?, ?);"
+                    " VALUES (?, ?);"
         )) {
             insertUser.setString(1, username);
             insertUser.setString(2, hash);
