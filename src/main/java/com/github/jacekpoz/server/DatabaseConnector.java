@@ -12,8 +12,10 @@ import com.kosprov.jargon2.api.Jargon2;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -83,7 +85,14 @@ public class DatabaseConnector {
             rs.close();
 
             Jargon2.Verifier v = Jargon2.jargon2Verifier();
-            if (v.hash(dbHash).password(lq.getValue("password", byte[].class)).verifyEncoded()) {
+            String stringPassword = lq.getValue("password", String.class);
+            System.out.println("stringPassword: " + stringPassword);
+            byte[] stringToBytePassword = lq.getValue("password", String.class).getBytes(StandardCharsets.UTF_8);
+            System.out.println("stringToBytePassword: " + Arrays.toString(stringToBytePassword));
+            byte[] bytePassword = lq.getValue("password", byte[].class);
+            System.out.println("bytePassword: " + Arrays.toString(bytePassword));
+
+            if (v.hash(dbHash).password(bytePassword).verifyEncoded()) {
                 returned.setSuccess(true);
                 returned.setResult(EnumResults.Login.LOGGED_IN);
                 returned.add(getUser(lq.getValue("username", String.class)));
