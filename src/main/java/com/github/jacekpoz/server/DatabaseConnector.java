@@ -1,21 +1,17 @@
 package com.github.jacekpoz.server;
 
-import com.github.jacekpoz.common.Constants;
 import com.github.jacekpoz.common.EnumResults;
+import com.github.jacekpoz.common.XnorConstants;
 import com.github.jacekpoz.common.sendables.*;
 import com.github.jacekpoz.common.sendables.database.queries.UserQuery;
 import com.github.jacekpoz.common.sendables.database.queries.UserQueryEnum;
-import com.github.jacekpoz.common.sendables.database.results.LoginResult;
 import com.github.jacekpoz.common.sendables.database.results.RegisterResult;
 import com.github.jacekpoz.server.util.FileUtil;
-import com.kosprov.jargon2.api.Jargon2;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,7 +31,7 @@ public class DatabaseConnector {
         try (PreparedStatement checkUsername = con.prepareStatement(
 
                 "SELECT username " +
-                    "FROM " + Constants.USERS_TABLE +
+                    "FROM " + XnorConstants.USERS_TABLE +
                     " WHERE username = ?;"
         )) {
             checkUsername.setString(1, rq.getValue("username", String.class));
@@ -64,58 +60,13 @@ public class DatabaseConnector {
         }
     }
 
-    public LoginResult login(UserQuery lq) {
-        if (lq.getQueryType() != UserQueryEnum.LOGIN) return null;
-        LoginResult returned = new LoginResult(lq);
-        returned.setSuccess(false);
-        try (PreparedStatement checkUsername = con.prepareStatement(
-                "SELECT * " +
-                    "FROM " + Constants.USERS_TABLE +
-                    " WHERE username = ?;"
-        )) {
-            checkUsername.setString(1, lq.getValue("username", String.class));
-            ResultSet rs = checkUsername.executeQuery();
-            if (!rs.next()) {
-                rs.close();
-                returned.setResult(EnumResults.Login.ACCOUNT_DOESNT_EXIST);
-                return returned;
-            }
-
-            String dbHash = rs.getString("password_hash");
-            rs.close();
-
-            Jargon2.Verifier v = Jargon2.jargon2Verifier();
-            String stringPassword = lq.getValue("password", String.class);
-            System.out.println("stringPassword: " + stringPassword);
-            byte[] stringToBytePassword = lq.getValue("password", String.class).getBytes(StandardCharsets.UTF_8);
-            System.out.println("stringToBytePassword: " + Arrays.toString(stringToBytePassword));
-            byte[] bytePassword = lq.getValue("password", byte[].class);
-            System.out.println("bytePassword: " + Arrays.toString(bytePassword));
-
-            if (v.hash(dbHash).password(bytePassword).verifyEncoded()) {
-                returned.setSuccess(true);
-                returned.setResult(EnumResults.Login.LOGGED_IN);
-                returned.add(getUser(lq.getValue("username", String.class)));
-                return returned;
-            }
-
-            returned.setResult(EnumResults.Login.WRONG_PASSWORD);
-            return returned;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            returned.setResult(EnumResults.Login.SQL_EXCEPTION);
-            returned.setEx(e);
-            return returned;
-        }
-    }
-
     public EnumResults.AddFriend addFriend(long userID, long friendID) {
         if (userID == friendID) return EnumResults.AddFriend.SAME_USER;
 
         PreparedStatement insertFriend = null;
         try (PreparedStatement checkFriend = con.prepareStatement(
                 "SELECT * " +
-                    "FROM " + Constants.FRIENDS_TABLE +
+                    "FROM " + XnorConstants.FRIENDS_TABLE +
                     " WHERE user_id = ? AND friend_id = ?;"
         )) {
             checkFriend.setLong(1, userID);
@@ -128,7 +79,7 @@ public class DatabaseConnector {
             rs.close();
 
             insertFriend = con.prepareStatement(
-                    "INSERT INTO " + Constants.FRIENDS_TABLE + " (user_id, friend_id) " +
+                    "INSERT INTO " + XnorConstants.FRIENDS_TABLE + " (user_id, friend_id) " +
                         "VALUES (?, ?);"
             );
             insertFriend.setLong(1, userID);
@@ -152,7 +103,7 @@ public class DatabaseConnector {
         if (userID == friendID) return EnumResults.RemoveFriend.SAME_USER;
 
         try (PreparedStatement removeFriend = con.prepareStatement(
-                "DELETE FROM " + Constants.FRIENDS_TABLE +
+                "DELETE FROM " + XnorConstants.FRIENDS_TABLE +
                 " WHERE user_id = ? AND friend_id = ?;"
         )) {
             removeFriend.setLong(1, userID);
@@ -168,7 +119,7 @@ public class DatabaseConnector {
 
     public Message addMessage(long messageID, long chatID, long authorID, String content) {
         try (PreparedStatement addMessage = con.prepareStatement(
-                "INSERT INTO " + Constants.MESSAGES_TABLE + "(message_id, chat_id, author_id, content)" +
+                "INSERT INTO " + XnorConstants.MESSAGES_TABLE + "(message_id, chat_id, author_id, content)" +
                     "VALUES (?, ?, ?, ?);"
         )) {
             addMessage.setLong(1, messageID);
@@ -192,7 +143,7 @@ public class DatabaseConnector {
         PreparedStatement insertRequest = null;
         try (PreparedStatement checkRequest = con.prepareStatement(
                 "SELECT * " +
-                    "FROM " + Constants.FRIEND_REQUESTS_TABLE +
+                    "FROM " + XnorConstants.FRIEND_REQUESTS_TABLE +
                     " WHERE sender_id = ? AND friend_id = ?;"
         )) {
             checkRequest.setLong(1, senderID);
@@ -205,7 +156,7 @@ public class DatabaseConnector {
             rs.close();
 
             insertRequest = con.prepareStatement(
-                    "INSERT INTO " + Constants.FRIEND_REQUESTS_TABLE +
+                    "INSERT INTO " + XnorConstants.FRIEND_REQUESTS_TABLE +
                         " VALUES (?, ?);"
             );
             insertRequest.setLong(1, senderID);
@@ -231,7 +182,7 @@ public class DatabaseConnector {
         PreparedStatement deleteRequest = null;
         try (PreparedStatement checkRequest = con.prepareStatement(
                 "SELECT * " +
-                    "FROM " + Constants.FRIEND_REQUESTS_TABLE +
+                    "FROM " + XnorConstants.FRIEND_REQUESTS_TABLE +
                     " WHERE sender_id = ? AND friend_id = ?;"
         )) {
             checkRequest.setLong(1, senderID);
@@ -245,7 +196,7 @@ public class DatabaseConnector {
             rs.close();
 
             deleteRequest = con.prepareStatement(
-                    "DELETE FROM " + Constants.FRIEND_REQUESTS_TABLE +
+                    "DELETE FROM " + XnorConstants.FRIEND_REQUESTS_TABLE +
                         " WHERE sender_id = ? AND friend_id = ?;"
             );
             deleteRequest.setLong(1, senderID);
@@ -283,7 +234,7 @@ public class DatabaseConnector {
         PreparedStatement deleteRequest = null;
         try (PreparedStatement checkRequest = con.prepareStatement(
                 "SELECT * " +
-                    "FROM " + Constants.FRIEND_REQUESTS_TABLE +
+                    "FROM " + XnorConstants.FRIEND_REQUESTS_TABLE +
                     " WHERE sender_id = ? AND friend_id = ?;"
         )) {
             checkRequest.setLong(1, senderID);
@@ -296,7 +247,7 @@ public class DatabaseConnector {
             rs.close();
 
             deleteRequest = con.prepareStatement(
-                    "DELETE FROM " + Constants.FRIEND_REQUESTS_TABLE +
+                    "DELETE FROM " + XnorConstants.FRIEND_REQUESTS_TABLE +
                         " WHERE sender_id = ? AND friend_id = ?;"
             );
             deleteRequest.setLong(1, senderID);
@@ -319,7 +270,7 @@ public class DatabaseConnector {
         PreparedStatement insertChatMessageCounter = null;
 
         try (PreparedStatement insertChat = con.prepareStatement(
-                "INSERT INTO " + Constants.CHATS_TABLE + " (name) " +
+                "INSERT INTO " + XnorConstants.CHATS_TABLE + " (name) " +
                     "VALUES (?);"
         )) {
             insertChat.setString(1, name);
@@ -327,7 +278,7 @@ public class DatabaseConnector {
 
             selectMissingInfo = con.prepareStatement(
                     "SELECT * " +
-                        "FROM " + Constants.CHATS_TABLE +
+                        "FROM " + XnorConstants.CHATS_TABLE +
                         " WHERE chat_id = LAST_INSERT_ID();"
             );
             ResultSet rs = selectMissingInfo.executeQuery();
@@ -336,7 +287,7 @@ public class DatabaseConnector {
             Timestamp dateCreated = rs.getTimestamp("date_created");
             rs.close();
             insertChatMessageCounter = con.prepareStatement(
-                    "INSERT INTO " + Constants.CHATS_MESSAGE_COUNTERS_TABLE + " (chat_id) " +
+                    "INSERT INTO " + XnorConstants.CHATS_MESSAGE_COUNTERS_TABLE + " (chat_id) " +
                             "VALUES (?);"
             );
             insertChatMessageCounter.setLong(1, chatID);
@@ -345,7 +296,7 @@ public class DatabaseConnector {
 
             for (long id : memberIDs) {
                 PreparedStatement insertMember = con.prepareStatement(
-                        "INSERT INTO " + Constants.USERS_IN_CHATS_TABLE +
+                        "INSERT INTO " + XnorConstants.USERS_IN_CHATS_TABLE +
                             " VALUES (?, ?);"
                 );
                 insertMember.setLong(1, chatID);
@@ -371,7 +322,7 @@ public class DatabaseConnector {
 
     public void addUserToChat(long chatID, long userID) {
         try (PreparedStatement addUserToChat = con.prepareStatement(
-                "INSERT INTO " + Constants.USERS_IN_CHATS_TABLE +
+                "INSERT INTO " + XnorConstants.USERS_IN_CHATS_TABLE +
                     " VALUES (?, ?);"
         )) {
             addUserToChat.setLong(1, chatID);
@@ -385,7 +336,7 @@ public class DatabaseConnector {
 
     public User createUser(String username, String hash) {
         try (PreparedStatement insertUser = con.prepareStatement(
-                "INSERT INTO " + Constants.USERS_TABLE + "(username, password_hash)" +
+                "INSERT INTO " + XnorConstants.USERS_TABLE + "(username, password_hash)" +
                     " VALUES (?, ?);"
         )) {
             insertUser.setString(1, username);
@@ -393,7 +344,7 @@ public class DatabaseConnector {
             insertUser.executeUpdate();
 
             User returned = getUser(username);
-            addUserToChat(Constants.GLOBAL_CHAT_ID, returned.getUserID());
+            addUserToChat(XnorConstants.GLOBAL_CHAT_ID, returned.getUserID());
 
             return returned;
         } catch (SQLException e) {
@@ -404,7 +355,7 @@ public class DatabaseConnector {
 
     public boolean deleteUser(long userID) {
         try (PreparedStatement deleteUser = con.prepareStatement(
-                "DELETE FROM " + Constants.USERS_TABLE +
+                "DELETE FROM " + XnorConstants.USERS_TABLE +
                     " WHERE user_id =?;"
         )) {
             deleteUser.setLong(1, userID);
@@ -430,7 +381,7 @@ public class DatabaseConnector {
 
     private void incrementChatMessageCounter(long chatID) {
         try (PreparedStatement incrementChatMessageCounter = con.prepareStatement(
-                "UPDATE " + Constants.CHATS_MESSAGE_COUNTERS_TABLE +
+                "UPDATE " + XnorConstants.CHATS_MESSAGE_COUNTERS_TABLE +
                     " SET message_counter = message_counter + 1 " +
                     "WHERE chat_id = ?;"
         )) {
@@ -443,7 +394,7 @@ public class DatabaseConnector {
 
     public void insertAttachment(long attachmentID, long chatID, long messageID, String path, Long attachmentPosition) {
         try (PreparedStatement insertAttachment = con.prepareStatement(
-                "INSERT INTO " + Constants.ATTACHMENTS_TABLE +
+                "INSERT INTO " + XnorConstants.ATTACHMENTS_TABLE +
                     " VALUES (?, ?, ?, ?, ?);"
         )) {
             insertAttachment.setLong(1, attachmentID);
@@ -470,7 +421,7 @@ public class DatabaseConnector {
     private User getUser0(String arg, String columnName) {
         try (PreparedStatement st = con.prepareStatement(
                 "SELECT * " +
-                    "FROM " + Constants.USERS_TABLE +
+                    "FROM " + XnorConstants.USERS_TABLE +
                     " WHERE " + columnName + " = ?;"
         )) {
             st.setString(1, arg);
@@ -498,7 +449,7 @@ public class DatabaseConnector {
     public List<User> getAllUsers() {
         try (PreparedStatement getUsers = con.prepareStatement(
                 "SELECT * " +
-                    "FROM " + Constants.USERS_TABLE
+                    "FROM " + XnorConstants.USERS_TABLE
         )) {
             ResultSet rs = getUsers.executeQuery();
             List<User> allUsers = new ArrayList<>();
@@ -522,7 +473,7 @@ public class DatabaseConnector {
     public List<Chat> getAllChats() {
         try (PreparedStatement st = con.prepareStatement(
                 "SELECT chat_id " +
-                    "FROM " + Constants.CHATS_TABLE
+                    "FROM " + XnorConstants.CHATS_TABLE
         )) {
             ResultSet rs = st.executeQuery();
             List<Chat> allChats = new ArrayList<>();
@@ -542,7 +493,7 @@ public class DatabaseConnector {
     public Chat getChat(long chatID) {
         try (PreparedStatement getChat = con.prepareStatement(
                 "SELECT * " +
-                    "FROM " + Constants.CHATS_TABLE +
+                    "FROM " + XnorConstants.CHATS_TABLE +
                     " WHERE chat_id = ?;"
         )) {
             getChat.setLong(1, chatID);
@@ -554,7 +505,7 @@ public class DatabaseConnector {
 
             Chat c = new Chat(chatID, name, created.toLocalDateTime(), getChatMessageCounter(chatID));
 
-            getMessagesFromChat(chatID, 0, Constants.DEFAULT_MESSAGES_LIMIT)
+            getMessagesFromChat(chatID, 0, XnorConstants.DEFAULT_MESSAGES_LIMIT)
                     .forEach(message -> c.getMessages().add(message));
 
             getUsersInChat(chatID)
@@ -570,7 +521,7 @@ public class DatabaseConnector {
     public Message getMessage(long messageID, long chatID) {
         try (PreparedStatement getMessage = con.prepareStatement(
                 "SELECT * " +
-                    "FROM " + Constants.MESSAGES_TABLE +
+                    "FROM " + XnorConstants.MESSAGES_TABLE +
                     " WHERE message_id = ? AND chat_id = ?;"
         )) {
             getMessage.setLong(1, messageID);
@@ -596,7 +547,7 @@ public class DatabaseConnector {
     public long getChatMessageCounter(long chatID) {
         try (PreparedStatement getMessageCounter = con.prepareStatement(
                 "SELECT message_counter " +
-                    "FROM " + Constants.CHATS_MESSAGE_COUNTERS_TABLE +
+                    "FROM " + XnorConstants.CHATS_MESSAGE_COUNTERS_TABLE +
                     " WHERE chat_id = ?;"
         )) {
             getMessageCounter.setLong(1, chatID);
@@ -616,7 +567,7 @@ public class DatabaseConnector {
     public List<Message> getMessagesFromChat(long chatID, long offset, long limit) {
         try (PreparedStatement getMessageIDs = con.prepareStatement(
                 "SELECT message_id " +
-                    "FROM " + Constants.MESSAGES_TABLE +
+                    "FROM " + XnorConstants.MESSAGES_TABLE +
                     " WHERE chat_id = ? " +
                     "LIMIT ?, ?;"
         )) {
@@ -650,7 +601,7 @@ public class DatabaseConnector {
     public List<User> getUsersInChat(long chatID) {
         try (PreparedStatement getUserIDs = con.prepareStatement(
                 "SELECT user_id " +
-                    "FROM " + Constants.USERS_IN_CHATS_TABLE +
+                    "FROM " + XnorConstants.USERS_IN_CHATS_TABLE +
                     " WHERE chat_id = ?;"
         )) {
             getUserIDs.setLong(1, chatID);
@@ -673,7 +624,7 @@ public class DatabaseConnector {
     public List<Chat> getUsersChats(long userID) {
         try (PreparedStatement getChatIDs = con.prepareStatement(
                 "SELECT chat_id " +
-                    "FROM " + Constants.USERS_IN_CHATS_TABLE +
+                    "FROM " + XnorConstants.USERS_IN_CHATS_TABLE +
                     " WHERE user_id = ?;"
         )) {
             getChatIDs.setLong(1, userID);
@@ -696,7 +647,7 @@ public class DatabaseConnector {
     public boolean isFriend(long userID, long friendID) {
         try (PreparedStatement getFriendIDs = con.prepareStatement(
                 "SELECT friend_id " +
-                    "FROM " + Constants.FRIENDS_TABLE +
+                    "FROM " + XnorConstants.FRIENDS_TABLE +
                     " WHERE user_id = ?;"
         )) {
             getFriendIDs.setLong(1, userID);
@@ -717,7 +668,7 @@ public class DatabaseConnector {
     public List<Long> getFriendIDs(long userID) {
         try (PreparedStatement getFriendIDs = con.prepareStatement(
                 "SELECT friend_id " +
-                        "FROM " + Constants.FRIENDS_TABLE +
+                        "FROM " + XnorConstants.FRIENDS_TABLE +
                         " WHERE user_id = ?;"
         )) {
             getFriendIDs.setLong(1, userID);
@@ -746,7 +697,7 @@ public class DatabaseConnector {
     public List<FriendRequest> getFriendRequests(long recipientID) {
         try (PreparedStatement st = con.prepareStatement(
                 "SELECT sender_id " +
-                    "FROM " + Constants.FRIEND_REQUESTS_TABLE +
+                    "FROM " + XnorConstants.FRIEND_REQUESTS_TABLE +
                     " WHERE friend_id = ?;"
         )) {
             st.setLong(1, recipientID);
@@ -770,7 +721,7 @@ public class DatabaseConnector {
     public List<Attachment> getAttachments(long chatID, long messageID) {
         try (PreparedStatement getAttachment = con.prepareStatement(
                 "SELECT * " +
-                    "FROM " + Constants.ATTACHMENTS_TABLE +
+                    "FROM " + XnorConstants.ATTACHMENTS_TABLE +
                     " WHERE chat_id = ? AND " +
                     "message_id = ?;"
         )) {
@@ -802,6 +753,31 @@ public class DatabaseConnector {
         } catch (SQLException | IOException e) {
             e.printStackTrace();
             return new ArrayList<>();
+        }
+    }
+
+    public String getSalt(String username) {
+        try (PreparedStatement getSalt = con.prepareStatement(
+                "SELECT salt " +
+                    "FROM " + XnorConstants.USERS_TABLE +
+                    " WHERE user_id = ?;"
+        )) {
+            User u = getUser(username);
+
+            getSalt.setLong(1, u.getUserID());
+
+            ResultSet rs = getSalt.executeQuery();
+            if (!rs.next()) {
+                rs.close();
+                return null;
+            }
+            String salt = rs.getString("salt");
+            rs.close();
+
+            return salt;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 }

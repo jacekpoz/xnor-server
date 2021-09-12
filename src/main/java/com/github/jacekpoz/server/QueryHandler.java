@@ -1,6 +1,6 @@
 package com.github.jacekpoz.server;
 
-import com.github.jacekpoz.common.Constants;
+import com.github.jacekpoz.common.XnorConstants;
 import com.github.jacekpoz.common.exceptions.UnknownQueryException;
 import com.github.jacekpoz.common.sendables.Chat;
 import com.github.jacekpoz.common.sendables.Message;
@@ -18,7 +18,7 @@ public class QueryHandler {
 
     public QueryHandler() {
         try {
-            connector = new DatabaseConnector("jdbc:mysql://localhost:3306/" + Constants.DB_NAME,
+            connector = new DatabaseConnector("jdbc:mysql://localhost:3306/" + XnorConstants.DB_NAME,
                     "xnor-chat-client", "DB_Password_0123456789");
         } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
@@ -125,7 +125,10 @@ public class QueryHandler {
 
         switch (uq.getQueryType()) {
             case LOGIN -> {
-                return connector.login(uq);
+                String salt = connector.getSalt(uq.getValue("username", String.class));
+                LoginResult lr = new LoginResult(uq, salt);
+                lr.add(connector.getUser(uq.getValue("username", String.class)));
+                return lr;
             }
             case REGISTER -> {
                 return connector.register(uq);

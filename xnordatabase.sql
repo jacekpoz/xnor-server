@@ -116,7 +116,8 @@ DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `user_id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `username` varchar(50) NOT NULL,
-  `password_hash` varchar(1000) NOT NULL,
+  `hash` char(64) NOT NULL,
+  `salt` char(16) NOT NULL,
   `date_joined` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `user_id_UNIQUE` (`user_id`)
