@@ -336,7 +336,7 @@ public class DatabaseConnector {
 
     public User createUser(String username, String hash) {
         try (PreparedStatement insertUser = con.prepareStatement(
-                "INSERT INTO " + XnorConstants.USERS_TABLE + "(username, password_hash)" +
+                "INSERT INTO " + XnorConstants.USERS_TABLE + "(username, hash)" +
                     " VALUES (?, ?);"
         )) {
             insertUser.setString(1, username);
@@ -430,7 +430,7 @@ public class DatabaseConnector {
 
             long id = rs.getLong("user_id");
             String nickname = rs.getString("username");
-            String hashedPassword = rs.getString("password_hash");
+            String hashedPassword = rs.getString("hash");
             Timestamp joined = rs.getTimestamp("date_joined");
             rs.close();
 
@@ -456,7 +456,7 @@ public class DatabaseConnector {
             while (rs.next()) {
                 long id = rs.getLong("user_id");
                 String nickname = rs.getString("username");
-                String hashedPassword = rs.getString("password_hash");
+                String hashedPassword = rs.getString("hash");
                 Timestamp joined = rs.getTimestamp("date_joined");
 
                 allUsers.add(new User(id, nickname, hashedPassword, joined.toLocalDateTime()));
@@ -763,6 +763,7 @@ public class DatabaseConnector {
                     " WHERE user_id = ?;"
         )) {
             User u = getUser(username);
+            if (u == null) return null;
 
             getSalt.setLong(1, u.getUserID());
 

@@ -4,6 +4,7 @@ import com.github.jacekpoz.common.XnorConstants;
 import com.github.jacekpoz.common.exceptions.UnknownQueryException;
 import com.github.jacekpoz.common.sendables.Chat;
 import com.github.jacekpoz.common.sendables.Message;
+import com.github.jacekpoz.common.sendables.User;
 import com.github.jacekpoz.common.sendables.database.queries.*;
 import com.github.jacekpoz.common.sendables.database.results.*;
 import com.github.jacekpoz.server.util.FileUtil;
@@ -127,7 +128,8 @@ public class QueryHandler {
             case LOGIN -> {
                 String salt = connector.getSalt(uq.getValue("username", String.class));
                 LoginResult lr = new LoginResult(uq, salt);
-                lr.add(connector.getUser(uq.getValue("username", String.class)));
+                User u = connector.getUser(uq.getValue("username", String.class));
+                if (u != null) lr.add(u);
                 return lr;
             }
             case REGISTER -> {
