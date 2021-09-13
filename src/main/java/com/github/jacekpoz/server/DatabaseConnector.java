@@ -45,7 +45,8 @@ public class DatabaseConnector {
 
             User registered = createUser(
                     rq.getValue("username", String.class),
-                    rq.getValue("hash", String.class)
+                    rq.getValue("hash", String.class),
+                    rq.getValue("salt", byte[].class)
             );
 
             returned.add(registered);
@@ -334,13 +335,14 @@ public class DatabaseConnector {
         }
     }
 
-    public User createUser(String username, String hash) {
+    public User createUser(String username, String hash, byte[] salt) {
         try (PreparedStatement insertUser = con.prepareStatement(
-                "INSERT INTO " + XnorConstants.USERS_TABLE + "(username, hash)" +
-                    " VALUES (?, ?);"
+                "INSERT INTO " + XnorConstants.USERS_TABLE + "(username, hash, salt)" +
+                    " VALUES (?, ?, ?);"
         )) {
             insertUser.setString(1, username);
             insertUser.setString(2, hash);
+            insertUser.setBytes(3, salt);
             insertUser.executeUpdate();
 
             User returned = getUser(username);
@@ -756,7 +758,7 @@ public class DatabaseConnector {
         }
     }
 
-    public String getSalt(String username) {
+    public byte[] getSalt(String username) {
         try (PreparedStatement getSalt = con.prepareStatement(
                 "SELECT salt " +
                     "FROM " + XnorConstants.USERS_TABLE +
@@ -772,7 +774,7 @@ public class DatabaseConnector {
                 rs.close();
                 return null;
             }
-            String salt = rs.getString("salt");
+            byte[] salt = rs.getBytes("salt");
             rs.close();
 
             return salt;

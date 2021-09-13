@@ -117,7 +117,7 @@ CREATE TABLE `users` (
   `user_id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `username` varchar(50) NOT NULL,
   `hash` varchar(500) NOT NULL,
-  `salt` varchar(100) NOT NULL,
+  `salt` varbinary(100) NOT NULL,
   `date_joined` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `user_id_UNIQUE` (`user_id`)

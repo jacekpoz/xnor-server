@@ -126,7 +126,7 @@ public class QueryHandler {
 
         switch (uq.getQueryType()) {
             case LOGIN -> {
-                String salt = connector.getSalt(uq.getValue("username", String.class));
+                byte[] salt = connector.getSalt(uq.getValue("username", String.class));
                 LoginResult lr = new LoginResult(uq, salt);
                 User u = connector.getUser(uq.getValue("username", String.class));
                 if (u != null) lr.add(u);
