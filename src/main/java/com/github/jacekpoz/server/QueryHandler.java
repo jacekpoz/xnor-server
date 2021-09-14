@@ -11,6 +11,7 @@ import com.github.jacekpoz.server.util.FileUtil;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.List;
 
 public class QueryHandler {
@@ -126,7 +127,7 @@ public class QueryHandler {
 
         switch (uq.getQueryType()) {
             case LOGIN -> {
-                byte[] salt = connector.getSalt(uq.getValue("username", String.class));
+                String salt = connector.getSalt(uq.getValue("username", String.class));
                 LoginResult lr = new LoginResult(uq, salt);
                 User u = connector.getUser(uq.getValue("username", String.class));
                 if (u != null) lr.add(u);

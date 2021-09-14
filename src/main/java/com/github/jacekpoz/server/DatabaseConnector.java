@@ -29,7 +29,6 @@ public class DatabaseConnector {
         RegisterResult returned = new RegisterResult(rq);
         returned.setSuccess(false);
         try (PreparedStatement checkUsername = con.prepareStatement(
-
                 "SELECT username " +
                     "FROM " + XnorConstants.USERS_TABLE +
                     " WHERE username = ?;"
@@ -758,7 +757,7 @@ public class DatabaseConnector {
         }
     }
 
-    public byte[] getSalt(String username) {
+    public String getSalt(String username) {
         try (PreparedStatement getSalt = con.prepareStatement(
                 "SELECT salt " +
                     "FROM " + XnorConstants.USERS_TABLE +
@@ -774,7 +773,7 @@ public class DatabaseConnector {
                 rs.close();
                 return null;
             }
-            byte[] salt = rs.getBytes("salt");
+            String salt = rs.getString("salt");
             rs.close();
 
             return salt;
