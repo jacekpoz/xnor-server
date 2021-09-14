@@ -44,8 +44,7 @@ public class DatabaseConnector {
 
             User registered = createUser(
                     rq.getValue("username", String.class),
-                    rq.getValue("hash", String.class),
-                    rq.getValue("salt", byte[].class)
+                    rq.getValue("hash", String.class)
             );
 
             returned.add(registered);
@@ -334,14 +333,13 @@ public class DatabaseConnector {
         }
     }
 
-    public User createUser(String username, String hash, byte[] salt) {
+    public User createUser(String username, String hash) {
         try (PreparedStatement insertUser = con.prepareStatement(
-                "INSERT INTO " + XnorConstants.USERS_TABLE + "(username, hash, salt)" +
-                    " VALUES (?, ?, ?);"
+                "INSERT INTO " + XnorConstants.USERS_TABLE + "(username, hash)" +
+                    " VALUES (?, ?);"
         )) {
             insertUser.setString(1, username);
             insertUser.setString(2, hash);
-            insertUser.setBytes(3, salt);
             insertUser.executeUpdate();
 
             User returned = getUser(username);
@@ -754,32 +752,6 @@ public class DatabaseConnector {
         } catch (SQLException | IOException e) {
             e.printStackTrace();
             return new ArrayList<>();
-        }
-    }
-
-    public String getSalt(String username) {
-        try (PreparedStatement getSalt = con.prepareStatement(
-                "SELECT salt " +
-                    "FROM " + XnorConstants.USERS_TABLE +
-                    " WHERE user_id = ?;"
-        )) {
-            User u = getUser(username);
-            if (u == null) return null;
-
-            getSalt.setLong(1, u.getUserID());
-
-            ResultSet rs = getSalt.executeQuery();
-            if (!rs.next()) {
-                rs.close();
-                return null;
-            }
-            String salt = rs.getString("salt");
-            rs.close();
-
-            return salt;
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return null;
         }
     }
 }
